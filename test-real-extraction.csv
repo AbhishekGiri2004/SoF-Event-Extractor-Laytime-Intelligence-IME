@@ -1,2 +1,0 @@
-Vessel,Port,Cargo,Operation,Voyage From,Voyage To,Demurrage Rate,Dispatch Rate,Load Rate,Cargo Qty,Event,Start Time,End Time
-MV TEST VESSEL,Test Port,Test Cargo,Test Operation,Test From,Test To,1000,500,2000,1000,Test Event,08:00,08:00
