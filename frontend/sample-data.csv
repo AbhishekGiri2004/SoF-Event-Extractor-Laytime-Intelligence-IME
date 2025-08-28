@@ -1,0 +1,5 @@
+Vessel,Port,Cargo,Operation,Voyage From,Voyage To,Demurrage Rate,Dispatch Rate,Load Rate,Cargo Qty,Event,Start Time,End Time
+MV Ocean Star,Singapore Port,Iron Ore,Discharge,China,Singapore,5000,2500,10000,47000,Arrival,2024-01-15 08:00,2024-01-15 08:00
+MV Ocean Star,Singapore Port,Iron Ore,Discharge,China,Singapore,5000,2500,10000,47000,Notice of Readiness,2024-01-15 10:00,2024-01-15 10:00
+MV Ocean Star,Singapore Port,Iron Ore,Discharge,China,Singapore,5000,2500,10000,47000,Commencement of Discharge,2024-01-15 14:00,2024-01-15 14:00
+MV Ocean Star,Singapore Port,Iron Ore,Discharge,China,Singapore,5000,2500,10000,47000,Completion of Discharge,2024-01-16 18:00,2024-01-16 18:00

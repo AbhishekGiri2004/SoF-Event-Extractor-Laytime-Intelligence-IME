@@ -1,0 +1,183 @@
+version: '3.9'
+
+services:
+  # Frontend React Application
+  frontend:
+    build: ./frontend
+    container_name: laytime_frontend
+    ports:
+      - "5173:80"
+    environment:
+      - VITE_API_BASE_URL=http://localhost:8000/api
+      - VITE_EXTRACTOR_URL=http://localhost:8001
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - laytime_network
+
+  # Laravel Backend API
+  backend:
+    build: ./backend-api
+    container_name: laytime_backend
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - DB_HOST=mysql
+      - DB_DATABASE=laytime_intelligence
+      - DB_USERNAME=laytime
+      - DB_PASSWORD=laytime_password
+      - REDIS_HOST=redis
+      - CACHE_DRIVER=redis
+      - SESSION_DRIVER=redis
+      - QUEUE_CONNECTION=redis
+    depends_on:
+      - mysql
+      - redis
+    volumes:
+      - ./backend-api:/var/www/html
+      - ./backend-api/storage:/var/www/html/storage
+    networks:
+      - laytime_network
+
+  # Python AI Processing Service
+  extractor:
+    build: ./services/extractor
+    container_name: laytime_extractor
+    ports:
+      - "8001:8001"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - AZURE_COGNITIVE_ENDPOINT=${AZURE_COGNITIVE_ENDPOINT}
+      - AZURE_COGNITIVE_KEY=${AZURE_COGNITIVE_KEY}
+      - AZURE_STORAGE_CONNECTION_STRING=${AZURE_STORAGE_CONNECTION_STRING}
+    volumes:
+      - ./services/extractor:/app
+      - ./uploads:/app/uploads
+    networks:
+      - laytime_network
+
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: laytime_mysql
+    environment:
+      MYSQL_DATABASE: laytime_intelligence
+      MYSQL_USER: laytime
+      MYSQL_PASSWORD: laytime_password
+      MYSQL_ROOT_PASSWORD: root_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database/init:/docker-entrypoint-initdb.d
+    networks:
+      - laytime_network
+
+  # Redis for Caching and Queues
+  redis:
+    image: redis:7-alpine
+    container_name: laytime_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - laytime_network
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: laytime_nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/ssl:/etc/nginx/ssl
+    depends_on:
+      - frontend
+      - backend
+      - extractor
+    networks:
+      - laytime_network
+
+  # Queue Worker for Background Jobs
+  queue-worker:
+    build: ./backend-api
+    container_name: laytime_queue_worker
+    command: php artisan queue:work --sleep=3 --tries=3 --max-time=3600
+    environment:
+      - APP_ENV=local
+      - DB_HOST=mysql
+      - DB_DATABASE=laytime_intelligence
+      - DB_USERNAME=laytime
+      - DB_PASSWORD=laytime_password
+      - REDIS_HOST=redis
+      - QUEUE_CONNECTION=redis
+    depends_on:
+      - mysql
+      - redis
+    volumes:
+      - ./backend-api:/var/www/html
+    networks:
+      - laytime_network
+
+  # Scheduler for Cron Jobs
+  scheduler:
+    build: ./backend-api
+    container_name: laytime_scheduler
+    command: php artisan schedule:work
+    environment:
+      - APP_ENV=local
+      - DB_HOST=mysql
+      - DB_DATABASE=laytime_intelligence
+      - DB_USERNAME=laytime
+      - DB_PASSWORD=laytime_password
+      - REDIS_HOST=redis
+    depends_on:
+      - mysql
+      - redis
+    volumes:
+      - ./backend-api:/var/www/html
+    networks:
+      - laytime_network
+
+  # Monitoring with Prometheus
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: laytime_prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    networks:
+      - laytime_network
+
+  # Grafana for Visualization
+  grafana:
+    image: grafana/grafana:latest
+    container_name: laytime_grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - laytime_network
+
+volumes:
+  mysql_data:
+  redis_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  laytime_network:
+    driver: bridge
