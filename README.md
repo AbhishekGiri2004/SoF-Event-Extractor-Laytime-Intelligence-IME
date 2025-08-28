@@ -2,7 +2,6 @@
 
 **Advanced maritime document processing system for Statement of Facts (SoF) and operational documents.**
 
-![Laytime Intelligence](https://www.creativefabrica.com/wp-content/uploads/2022/12/05/AG-GA-initial-logo-brand-letter-design-v-Graphics-50456674-1-1-580x386.jpg)
 
 ## 🚢 Overview
 
